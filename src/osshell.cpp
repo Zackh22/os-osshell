@@ -12,6 +12,7 @@ void splitString(std::string text, char d, char **result);
 
 int main (int argc, char **argv)
 {
+    char* input;
     // Get list of paths to binary executables
     // `os_path_list` supports up to 16 directories in PATH, 
     //     each with a directory name length of up to 64 characters
@@ -38,15 +39,22 @@ int main (int argc, char **argv)
     //     each with a parameter string length of up to 128 characters
     char **command_list;
     allocateArrayOfCharArrays(&command_list, 32, 128);
-
+    int whileLoop = 1;
     // Repeat:
-    //  Print prompt for user input: "osshell> " (no newline)
-    //  Get user input for next command
-    //  If command is `exit` exit loop / quit program
-    //  If command is `history` print previous N commands
-    //  For all other commands, check if an executable by that name is in one of the PATH directories
-    //   If yes, execute it
-    //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
+    while(whileLoop == 1){
+        //  Print prompt for user input: "osshell> " (no newline)
+        std::cout << "osshell>";
+        //  Get user input for next command
+        std::cin >> input;
+        //  If command is `exit` exit loop / quit program
+        if(strcmp(input, "exit") == 0){
+            exit(-1);
+        }
+        //  If command is `history` print previous N commands
+        //  For all other commands, check if an executable by that name is in one of the PATH directories
+        //   If yes, execute it
+        //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
+    }
 
     // Free allocated memory
     freeArrayOfCharArrays(os_path_list, 16);
@@ -91,12 +99,55 @@ void freeArrayOfCharArrays(char **array, size_t array_length)
 */
 void splitString(std::string text, char d, char **result)
 {
+    enum states { NONE, IN_WORD, IN_STRING } state = NONE;
+
     int i;
     std::vector<std::string> list;
-    std::stringstream ss(text);
     std::string token;
-    
-    while (std::getline(ss, token, d))
+    for (i = 0; i < text.length(); i++)
+    {
+        char c = text[i];
+        switch (state) {
+            case NONE:
+                if (c != d)
+                {
+                    if (c == '\"')
+                    {
+                        state = IN_STRING;
+                        token = "";
+                    }
+                    else
+                    {
+                        state = IN_WORD;
+                        token = c;
+                    }
+                }
+                break;
+            case IN_WORD:
+                if (c == d)
+                {
+                    list.push_back(token);
+                    state = NONE;
+                }
+                else
+                {
+                    token += c;
+                }
+                break;
+            case IN_STRING:
+                if (c == '\"')
+                {
+                    list.push_back(token);
+                    state = NONE;
+                }
+                else
+                {
+                    token += c;
+                }
+                break;
+        }
+    }
+    if (state != NONE)
     {
         list.push_back(token);
     }
