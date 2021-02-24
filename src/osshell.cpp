@@ -12,7 +12,22 @@ void splitString(std::string text, char d, char **result);
 
 int main (int argc, char **argv)
 {
-    char* input;
+    
+    char exit1[] = "exit";
+    /*
+    char exit2[] = "exit";
+    if(*exit == *exit2){
+        printf("exit = exit 2\n");
+    } else{
+        printf("do not = \n");
+    }
+    */
+
+
+    char input[153];
+    char history[] = "history";
+    //std::string input;
+    std::string text;
     // Get list of paths to binary executables
     // `os_path_list` supports up to 16 directories in PATH, 
     //     each with a directory name length of up to 64 characters
@@ -23,12 +38,14 @@ int main (int argc, char **argv)
 
 
     // Example code for how to loop over NULL terminated list of strings
+    /*
     int i = 0;
     while (os_path_list[i] != NULL)
     {
         printf("PATH[%2d]: %s\n", i, os_path_list[i]);
         i++;
     }
+    */
 
 
     // Welcome message
@@ -40,20 +57,55 @@ int main (int argc, char **argv)
     char **command_list;
     allocateArrayOfCharArrays(&command_list, 32, 128);
     int whileLoop = 1;
+    int j = 0;
+    int size = 0;
+    char* test;
     // Repeat:
     while(whileLoop == 1){
         //  Print prompt for user input: "osshell> " (no newline)
         std::cout << "osshell>";
+
         //  Get user input for next command
         std::cin >> input;
+        //Add command good or bad into comand_list
+        printf("%i\n", size);
+        command_list[size] = input;
+        std:: cout << command_list[0] << "\n";
+        std:: cout << command_list[1] << "\n";
+        std:: cout << command_list[2] << "\n";
+
         //  If command is `exit` exit loop / quit program
-        if(strcmp(input, "exit") == 0){
+        //printf("before if statement\n");
+        if(*input == *exit1){
+            //printf("exit = break\n");
+            size++;
             exit(-1);
         }
+        //printf("PATH : %s\n", getenv("PATH"));
         //  If command is `history` print previous N commands
+        if(*input == *history){
+            printf("inside history if\n");
+            int k;
+            for(k = 0; k <= size; k++){
+                std::cout << k << ": " << command_list[k] << std::endl;
+            }
+        }
+
+
         //  For all other commands, check if an executable by that name is in one of the PATH directories
         //   If yes, execute it
+        
+        //  If input is a legal command -- might be wrong function or array passed
+        if(getenv(input) != NULL){ 
+            //fork() process?
+            //execute command ;; might need getenv here?
+
+        }
+
         //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
+        
+
+        size++;
     }
 
     // Free allocated memory
