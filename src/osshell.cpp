@@ -8,21 +8,51 @@
 #include <iterator>
 #include <array>
 
+#include <fstream>
+#include <stdio.h>
+#include <string>
+
 void freeArrayOfCharArrays(char **array, size_t array_length);
 void splitString(std::string text, char d, std::vector<std::string>& result);
 void vectorOfStringsToArrayOfCharArrays(std::vector<std::string>& list, char ***result);
+int getNumLinesInFile();
 
 int main (int argc, char **argv)
 {
-    char *input;
+    //char *input;
+    std::string input;
+    char* charInput;
     char history[] = "history";
     char exiting[] = "exit";
-    char *text;
-    int history_list_size = 0;
+    int historySize = 0;
+    char fileName[] = "history.txt";
+    std::string currentLine;
 
-    //char cmdHistory[127][127];    //Probs have to use malloc to allocate memory 
+    std::fstream file;
+    if(file){
+        std::cout << "B4 the open\n";
+    }
+    file.open(fileName);
+    //If the file does not exist
+    if(!file){
+        file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
+    }
+    std::string * historyList = new std::string[128];
 
-    //std::array<std::string, 128> history_list;
+    //put everything currently in the file into historyList[]
+    while(!file.eof()){
+        std::string line = "";
+        getline(file, line);
+        //std::cout << line << "\n";
+
+        //if first = \n dont add it
+        historyList[historySize] = line;
+        historySize++;
+    }
+
+    for(int j=0; j < historySize; j++){
+        std::cout<< historyList[j]<< std::endl;
+    }
     
     // Get list of paths to binary executables
     // `os_path_list` supports up to 16 directories in PATH, 
@@ -30,17 +60,6 @@ int main (int argc, char **argv)
     std::vector<std::string> os_path_list;
     
     char* os_path = getenv("PATH");
-
-    // Example code for how to loop over NULL terminated list of strings
-    /*
-    int i = 0;
-    while (os_path_list[i] != NULL)
-    {
-        printf("PATH[%2d]: %s\n", i, os_path_list[i]);
-        i++;
-    }
-    */
-
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
@@ -56,8 +75,7 @@ int main (int argc, char **argv)
     int temp = 0;
 
     std::string example_command = "ls -lh";
-    char **command_list_exec; 
-
+    char **command_list_exec;
     vectorOfStringsToArrayOfCharArrays(command_list, &command_list_exec);
     splitString(example_command, ' ', command_list);
 
@@ -76,71 +94,94 @@ int main (int argc, char **argv)
         std::cout << "osshell>";
 
         //  Get user input for next command
-        std::cin >> input;
-        printf("got input\n");
-        /*
-        strcpy(cmdHistory[0], input);
-        history_list_size++;
-        std::cout << cmdHistory[0] << "\n";
-        */
+        std::getline(std::cin, input);
+        if(input.empty()){
+            //printf("input was a new line character\n");
+            continue;
+        }else{
+            //printf("got input\n");
+            charInput = new char[input.length()+1];
+            std::strcpy(charInput, input.c_str());
+            file << input << std::endl;
+            file.close();
+            file.open(fileName);
+            std::vector<std::string> input_list;
 
-        //history_list_size = history_list.size();
-        //history_list[history_list_size-1] = input;
+            //std::string example_command = "ls -lh";
+            char **input_list_exec;
+            vectorOfStringsToArrayOfCharArrays(input_list, &input_list_exec);
+            splitString(input, ' ', input_list);            
 
-        /*
-        //Add command good or bad into history vector
-        printf("before line 76\n");
-        history_list_size = history_list.size();
-        printf("%i\n", history_list_size);
-        std::vector<int>::iterator it;
-        if(history_list_size == 0){
-            it = history_list.begin();
-            history_list.insert(it, input);
-        }
-        else{
-            history_list.begin() + history_list_size - 1;
-            it = history_list.insert(it, input);
-        }
-        */
-        
-        //  If command is `exit` exit loop / quit program
-        printf("before exit strcmp\n");
-        if(strcmp(input, exiting) == 0){
-            //printf("exit = break\n");
-            size++;
-            exit(-1);
-            //printf("PATH : %s\n", getenv("PATH"));
+            historySize++;
+            //Added input to the history list
+            historyList[historySize] = input_list[0];
+            
+            //Reassigning charInput to be the first element in the string that was just split
+            std::strcpy(charInput, input_list[0].c_str());
 
+            //  If command is `exit` exit loop / quit program
+            if(strcmp(charInput, exiting) == 0){
+                size++;
+                exit(-1);
             //  If command is `history` print previous N commands
-        } else if(strcmp(input, history) == 0){
-            for(int i = 0; i < history_list_size; i++){
-                //std::cout << "  " << i << ": " << history_list[i];
+            } else if(strcmp(charInput, history) == 0){
+                //std::string * historyList = new std::string[128];
+                std::string line = "";
+                int index = 0;
+                int numPrint = 0; 
+
+                //numLinesInHist = getNumLinesInFile();
+                
+                /*
+                for(int i = 0; i < historySize; i++){
+                    getline(myFile, line);
+                    historyList[i] = line;
+                    std::cout << historyList[i];
+                }
+                */
+
+               
+                //check if input is histroy
+                if(input_list[1].empty()){
+                    //print all of the historyArray
+                    std::cout<< "os_path_list[1].empty() is true\n";
+                    for(int i = 0; i < historySize;i++){
+                        std::cout << "  " << i << ": " << historyList[i] << "\n";
+                    }
+                    
+                } else{
+                    //print only that many lines from the historyArray
+                    //TODO set numPrint to the second argument that comes with history
+                    for(int i = historySize; i >= historySize - numPrint; i--){
+                        std::cout << "  " << index << ": " << historyList[i] << "\n";
+                        index = index + 1;
+                    }
+                }
+                for(int i = 0; i < historySize; i++){
+                    //std::cout << "  " << i << ": " << history_list[i];
+                }        
+        
+            //  For all other commands, check if an executable by that name is in one of the PATH directories
+        
+            //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
+
+            } else if(execv(char_os_path_list, command_list_exec) == -1){
+                std::cout << input << ": Error command not found\n"; 
+                continue;
             }
+            //  If input is a legal command -- execute it
 
-        //printf("after the if checks\n");
-    
-    
-        //  For all other commands, check if an executable by that name is in one of the PATH directories
-    
-        //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
-
-        } else if(execv(char_os_path_list, command_list_exec) == -1){
-            //-1 means error was found
-            // TODO change output to most recent element in history
-            std::cout << input << ": Error command not found\n"; 
-            break;
+            size++;
         }
-        //  If input is a legal command -- execute it
-
-        size++;
     }
 
     // Free allocated memory
-
     freeArrayOfCharArrays(command_list_exec, command_list.size() +1);
 
     // don't forget to free the string after finished using it
     delete[] char_os_path_list;
+    //historyFile.close();
+    file.close();
 
     return 0;
 }
@@ -161,7 +202,6 @@ void freeArrayOfCharArrays(char **array, size_t array_length)
     }
     delete[] array;
 }
-
 
 /*
    text: string to split
@@ -236,3 +276,57 @@ void vectorOfStringsToArrayOfCharArrays(std::vector<std::string>& list, char ***
     }
     (*result)[list.size()] = NULL;
 }
+
+/*
+int getNumLinesInFile(){
+    int numLines = 0;
+
+    //open file
+    std::fstream file;
+    file.open("history.txt");
+
+    //count lines in file
+    while(!file.eof()){
+        std::string line = "";
+        getline(file, line);
+        numLines++;
+    }
+    return numLines;
+}
+*/
+    //hist = fopen("history.txt", "r");
+    
+    
+
+    //std::ofstream historyFile;
+    //historyFile.open("history.txt");
+    //historySize = 0;
+    //char charPerLine[360];
+
+    /*
+    while(std::cin.getline(charPerLine, 5)){
+        std::cout << "hi\n";
+        break
+    }
+    */    
+    
+    //char cmdHistory[127][127];    //Probs have to use malloc to allocate memory 
+
+    //std::array<std::string, 128> history_list;
+
+
+    // Example code for how to loop over NULL terminated list of strings
+    /*
+    int i = 0;
+    while (os_path_list[i] != NULL)
+    {
+        printf("PATH[%2d]: %s\n", i, os_path_list[i]);
+        i++;
+    }
+    */
+
+    /*
+    text = new char[example_command.length()+1];
+    std::strcpy(text, example_command.c_str());
+    std::cout << text << std::endl;
+    */
