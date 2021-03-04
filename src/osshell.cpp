@@ -15,6 +15,10 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
+
 void freeArrayOfCharArrays(char **array, size_t array_length);
 void splitString(std::string text, char d, std::vector<std::string>& result);
 void vectorOfStringsToArrayOfCharArrays(std::vector<std::string>& list, char ***result);
@@ -33,7 +37,19 @@ int main (int argc, char **argv)
     char clear[] = "clear";
     int historySize = 0;
     char fileName[] = "history.txt";
+
+    //Arg list decloration
+    std::vector<std::string> vector_arg_list;
+    char **arg_list_exec;
+
+    int i = 0;
+    struct stat sb;
+    char execution[128];
+
     std::string currentLine;
+
+
+
 
     std::fstream file;
     file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
@@ -58,8 +74,8 @@ int main (int argc, char **argv)
     file.open(fileName, std::fstream::app);
 
     for(int j=0; j < historySize; j++){
-        printf("Printing what is currently in the history.txt file: ");
-        std::cout<< historyList[j]<< std::endl;
+        //printf("Printing what is currently in the history.txt file: ");
+        //std::cout<< historyList[j]<< std::endl;
     }
     
     // Get list of paths to binary executables
@@ -68,6 +84,7 @@ int main (int argc, char **argv)
     std::vector<std::string> os_path_list;
     
     char* os_path = getenv("PATH");
+    char *arg_list = getenv("PATH");
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
@@ -87,6 +104,7 @@ int main (int argc, char **argv)
     vectorOfStringsToArrayOfCharArrays(command_list, &command_list_exec);
     splitString(example_command, ' ', command_list);
 
+
     //third variable needs to be a vector
     splitString(os_path, ':', os_path_list);
 
@@ -96,8 +114,9 @@ int main (int argc, char **argv)
     std::copy(string_os_path_list.begin(), string_os_path_list.end(), char_os_path_list);
     char_os_path_list[string_os_path_list.size()] = '\0'; // don't forget the terminating 0
 
+
     for(int i = 0; i < 10; i++){
-        std::cout << os_path_list[i] << "\n";
+        //std::cout << os_path_list[i] << "\n";
     }
 
     // Repeat:
@@ -114,6 +133,21 @@ int main (int argc, char **argv)
             
             charInput = new char[input.length()+1];
             std::strcpy(charInput, input.c_str());
+            
+            //getting and initalizing the different arguments in input
+            splitString(input, ' ', vector_arg_list);
+            vectorOfStringsToArrayOfCharArrays(vector_arg_list, &arg_list_exec);
+            std::string string_arg_list;
+            string_arg_list = vector_arg_list[0];
+            char * char_arg_list = new char[string_arg_list.size()+1];
+            std::copy(string_arg_list.begin(), string_arg_list.end(), char_arg_list);
+            char_arg_list[string_arg_list.size()] = '\0'; // don't forget the terminating 0
+
+            std::cout << "String Arg List = " << string_arg_list.c_str() << "\n";
+            std::cout << "vector string = " << vector_arg_list[0] << "\n";
+            
+            //execv(vector_arg_list[0].c_str(), arg_list_exec);
+
 
             file << input << std::endl;
 
@@ -149,6 +183,41 @@ int main (int argc, char **argv)
 
                 for(int i = 1; i < historySize; i++){
                         std::cout << "  " << i << ": " << historyList[i] << "\n";
+                }
+            }else{
+                bool foundPath;
+                std::string copy;
+                i = 0;
+                while(os_path_list[i].c_str() != NULL){
+                    copy = string_arg_list;
+                    string_arg_list = os_path_list[i] + "/" + string_arg_list;
+                    //std::cout << "NEW string_arg_list = " << string_arg_list.c_str() << " " << os_path_list[i].c_str() << " " << stat(execution, &sb) << "\n";
+                    if(stat(string_arg_list.c_str(), &sb) != -1){
+                        std::cout << "Found Path\n";
+                        foundPath = true;
+                        //if command path found, break out of loop
+                        break;
+                    } else{
+                        string_arg_list = copy;
+                    }
+                    i++;
+                }
+                if(foundPath){
+                    int pid = fork();
+                    //child
+                    if(pid == 0){
+                        std::cout << "argv[0] = " << argc << "\n";
+                        //argv[0] = "./osshell";
+                        //null argv being passed here: 
+                        execv(string_arg_list.c_str(), arg_list_exec);
+                    } else{
+                        //parent
+                        int status;
+                        waitpid(pid, &status, 0);
+
+                    }
+                } else{
+                    std::cout << "ERROR COMMAND NOT FOUND \n";
                 }
 
                 /*
@@ -187,7 +256,7 @@ int main (int argc, char **argv)
                     }
                 }
                 */    
-
+            /*
             //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
             } else if(execv(charInput, command_list_exec) == -1){
                 std::cout << input << ": Error command not found\n"; 
@@ -238,15 +307,18 @@ int main (int argc, char **argv)
                     waitpid(pid, &status, 0);
                 }
             }
+            */
+            }
 
         }
     }
 
     // Free allocated memory
     freeArrayOfCharArrays(command_list_exec, command_list.size() +1);
+    freeArrayOfCharArrays(arg_list_exec, vector_arg_list.size()+1);
 
     // don't forget to free the string after finished using it
-    delete[] char_os_path_list;
+    //delete[] char_os_path_list;
     //historyFile.close();
     file.close();
 
