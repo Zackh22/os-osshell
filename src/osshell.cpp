@@ -30,6 +30,8 @@ int main (int argc, char **argv)
     std::string history = "history";
     std::string clear = " clear";
     char exiting[] = "exit";
+    std::string dot = ".";
+    std::string slash = "/";
     
     int historySize = 0;
     char fileName[] = "history.txt";
@@ -156,8 +158,8 @@ int main (int argc, char **argv)
                         file.open("history.txt", std::fstream::out | std::fstream::trunc);
                     } else{
                         for(int j =0; j < input_list[1].size(); j++){
-                            if(!isdigit(inputlistAt1[j]) || std::stoi(input_list[1]) < 0){
-                                std::cout << input << ": Error command not found\n";
+                            if(!isdigit(inputlistAt1[j]) || std::stoi(input_list[1]) <= 0){
+                                std::cout << "Error: history expects an integer > 0 (or 'clear')\n";
                                 break;
                             }
                         }
@@ -168,6 +170,8 @@ int main (int argc, char **argv)
                             std::cout << "  " << i << ": " << historyList[i] << "\n";
                     }
                 }
+            
+                
             }else{
                 bool foundPath;
                 i = 0;
