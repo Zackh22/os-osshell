@@ -30,11 +30,12 @@ int main (int argc, char **argv)
     std::string history = "history";
     std::string clear = " clear";
     char exiting[] = "exit";
-    std::string dot = ".";
-    std::string slash = "/";
-    
+    char dot[] = ".";
+    char slash[] = "/";
     int historySize = 0;
     char fileName[] = "history.txt";
+    std::string char1;
+    bool foundPath;
 
     //Arg list decloration
     std::vector<std::string> vector_arg_list;
@@ -55,7 +56,7 @@ int main (int argc, char **argv)
     }
     std::string * historyList = new std::string[128];
 
-    //put everything currently in the file into historyList[]
+    
     while(!file.eof()){
         std::string line;
         getline(file, line);
@@ -103,15 +104,18 @@ int main (int argc, char **argv)
     while(whileLoop == 1){
         //  Print prompt for user input: "osshell> " (no newline)
         std::cout << "osshell>";
+        charInput = new char[input.length()+1];
+        
 
         //  Get user input for next command
         std::getline(std::cin, input);
+        char1 = input.substr(0,1);
         
         if(input.empty()){
             printf("input was a new line character\n");
             continue;
         }else{
-            charInput = new char[input.length()+1];
+            
             std::strcpy(charInput, input.c_str());
             
             //getting and initalizing the different arguments in input
@@ -166,21 +170,34 @@ int main (int argc, char **argv)
                     }
                 } else{
                     for(int i = 0; i < historySize; i++){
-                        //Passing in the wrong thing for historyList[i]. The txt file recieves everything correctly.
-                            std::cout << "  " << i << ": " << historyList[i] << "\n";
+                        std::cout << "  " << i << ": " << historyList[i] << "\n";
                     }
                 }
             
-                
+            }else if(char1.compare("/") == 0 || (char1.compare(".") == 0)){ 
+                //do this
+                if(stat(string_arg_list.c_str(), &sb) != -1){
+                    int pid = fork();
+                    //child
+                    if(pid == 0){
+                        execv(string_arg_list.c_str(), &charInput);
+                    } else{
+                        //parent
+                        int status;
+                        waitpid(pid, &status, 0);
+
+                    }
+                } else{
+                    std::cout << input << ": Error command not found\n";
+                }
+
             }else{
-                bool foundPath;
                 i = 0;
                 while(os_path_list[i].c_str() != NULL){
                     copy = string_arg_list;
                     string_arg_list = os_path_list[i] + "/" + string_arg_list;
-                    //std::cout << "NEW string_arg_list = " << string_arg_list.c_str() << " " << os_path_list[i].c_str() << " " << stat(execution, &sb) << "\n";
+                    
                     if(stat(string_arg_list.c_str(), &sb) != -1){
-                        //std::cout << "Found Path\n";
                         foundPath = true;
                         //if command path found, break out of loop
                         break;
