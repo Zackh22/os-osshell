@@ -27,9 +27,10 @@ int main (int argc, char **argv)
     char* charInput;
     char* secondInput;
     std::string secondInputString;
-    char history[] = "history";
-    char exiting[] = "exit";
+    std::string history = "history";
     std::string clear = " clear";
+    char exiting[] = "exit";
+    
     int historySize = 0;
     char fileName[] = "history.txt";
 
@@ -140,14 +141,13 @@ int main (int argc, char **argv)
                 exit(-1);
             
             //  If command is `history` print previous N commands
-            } else if(strcmp(charInput, history) == 0){
+            } else if(strcmp(input_list[0].c_str(), history.c_str()) == 0){
                // charInput only checks the first part of input
                 char inputlistAt1[input.length()+1];
                 int inputIndex;
 
                 if(input_list[1].c_str() != NULL){
                     std::strcpy(inputlistAt1, input_list[1].c_str());
-                    std::cout << "inputList[1] = " << input_list[1].c_str() << std::endl;
                     
                     if(strcmp(input_list[1].c_str(), clear.c_str())){
                         //delete file -- reset size to 0;
@@ -160,9 +160,6 @@ int main (int argc, char **argv)
                                 std::cout << input << ": Error command not found\n";
                                 break;
                             }
-                        }
-                        for(int del = historySize-1-std::stoi(input_list[1]); del < historySize-1; del++){
-                            
                         }
                     }
                 } else{
